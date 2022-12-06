@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="styles.css">
+    <title>Personality Quiz</title>
+</head>
+
+<h1>Interactive Personality Quiz</h1>
+<h2>Estimated completion time: ~2 minutes</h2>
+<p>This is a shortened MBTI personality quiz (10 questions), but built with a machine learning model that receives your responses with visual inputs.</p>
+<p>Hold up fingers to indicate 1-5 (1 means completely disagree, 5 means totally agree).</p>
+<p>Make sure you keep your body in frame (from chest up), but hold your finger away from your face so the model can interpret your input better.</p>
+<p>To begin, press the button below to allow the usage of your camera. (Give it a few seconds to start.)</p>
+<p>After your camera turns on, start the quiz. It will begin immediately, and the questions will automatically move on after a few seconds</p>
+
+    <div class="row">
+        <div class="column">
+            <button type="button" onclick="init()">Start facecam!</button>
+            <div><canvas id="canvas"></canvas></div>
+            <div id="label-container"></div>
+        </div>
+
+            <div class="column">
+                <button onclick="quiz()">Start the quiz!</button>
+                <div id="question"></div>
+                <div id="timer"></div>
+                <div id="nextdiv"></div>    
+
+            
+            <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@1.3.1/dist/tf.min.js"></script>
+            <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/pose@0.8/dist/teachablemachine-pose.min.js"></script>
+            <script type="text/javascript">
+
+                // More API functions here:
+                // https://github.com/googlecreativelab/teachablemachine-community/tree/master/libraries/pose
+
+                // the link to your model provided by Teachable Machine export panel
+                const URL = "https://teachablemachine.withgoogle.com/models/fgnBcZnC6/";
+                let model, webcam, ctx, labelContainer, maxPredictions;
+
+                let poselabels = [];
+                let good = 0;
+                let bad = 0;
+
+                async function init() {
+                    const modelURL = URL + "model.json";
+                    const metadataURL = URL + "metadata.json";
+
+                    // load the model and metadata
+                    // Refer to tmImage.loadFromFiles() in the API to support files from a file picker
+                    // Note: the pose library adds a tmPose object to your window (window.tmPose)
+                    model = await tmPose.load(modelURL, metadataURL);
+                    maxPredictions = model.getTotalClasses();
+
+                    // Convenience function to setup a webcam
+                    const size = 400;
+                    const flip = true; // whether to flip the webcam
+                    webcam = new tmPose.Webcam(size, size, flip); // width, height, flip
+                    await webcam.setup(); // request access to the webcam
+                    await webcam.play();
+                    window.requestAnimationFrame(loop);
+
+                    // append/get elements to the DOM
+                    const canvas = document.getElementById("canvas");
+                    canvas.width = size; canvas.height = size;
+                    ctx = canvas.getContext("2d");
+                    labelContainer = document.getElementById("label-container");
+                    for (let i = 0; i < maxPredictions; i++) { // and class labels
+                        labelContainer.appendChild(document.createElement("div"));
+                    }
+                }
+
+                async function loop(timestamp) {
+                    webcam.update(); // update the webcam frame
+                    await predict();
+                    window.requestAnimationFrame(loop);
+                }
+
+                async function predict() {
+                    // Prediction #1: run input through posenet
+                    // estimatePose can take in an image, video or canvas html element
+                    const { pose, posenetOutput } = await model.estimatePose(webcam.canvas);
+                    // Prediction 2: run input through teachable machine classification model
+                    const prediction = await model.predict(posenetOutput);
+
+                    for (let i = 0; i < maxPredictions; i++) {
+                        const classPrediction = prediction[i].probability.toFixed(2); //THIS IS WHERE THE GOOD/BAD LABELS ARE
+                        if(poselabels.length < 1750){
+                            poselabels.push(parseFloat(classPrediction));
+                            console.log(poselabels)
+                        }
+                   
+                    
+                    }
+                    drawPose(pose);
+
+                }
+
+                function drawPose(pose) {
+                    if (webcam.canvas) {
+                        ctx.drawImage(webcam.canvas, 0, 0);
+                        // draw the keypoints and skeleton
+                        if (pose) {
+                            const minPartConfidence = 0.5;
+                            // tmPose.drawKeypoints(pose.keypoints, minPartConfidence, ctx);
+                            // tmPose.drawSkeleton(pose.keypoints, minPartConfidence, ctx);
+                        }
+                    }
+                }
+
+            
+                function quiz(){
+                    if(webcam){
+                        startquiz();   
+                    }
+                    else{
+                        alert("Please allow the camera to start the quiz.");
+                        
+                    }
+                    
+                }
+
+                //create a function with a constant timer and replacable questions. after the timer ends, display the next question
+                function startquiz(){
+                    const question = document.getElementById("question");
+                    const timer = document.getElementById("timer");
+                    question.innerHTML = "The quiz will begin in a few seconds!";
+                    timer.innerHTML = "5";
+                    let time = 5;
+                    const interval = setInterval(function(){
+                        time--;
+                        timer.innerHTML = time;
+                        if (time < 0){
+                            clearInterval(interval);
+                            question1();
+                        }
+                    }, 1000);
+                }
+                function question1(){
+                    const question = document.getElementById("question");
+                    const timer = document.getElementById("timer");
+                    question.innerHTML = "You regularly make new friends.";
+                    timer.innerHTML = "5";
+                    let time = 5;
+                    const interval = setInterval(function(){
+                        time--;
+                        timer.innerHTML = time;
+                        if (time < 0){
+                            clearInterval(interval);
+                            question2();
+                        }
+                    }, 1000);
+                }
+                function question2(){
+                    const question = document.getElementById("question");
+                    const timer = document.getElementById("timer");
+                    question.innerHTML = "You usually stay calm, even under a lot of pressure.";
+                    timer.innerHTML = "5";
+                    let time = 5;
+                    const interval = setInterval(function(){
+                        time--;
+                        timer.innerHTML = time;
+                        if (time < 0){
+                            clearInterval(interval);
+                            question3();
+                        }
+                    }, 1000);
+                }
+                function question3(){
+                    const question = document.getElementById("question");
+                    const timer = document.getElementById("timer");
+                    question.innerHTML = "You are very sentimental.";
+                    timer.innerHTML = "5";
+                    let time = 5;
+                    const interval = setInterval(function(){
+                        time--;
+                        timer.innerHTML = time;
+                        if (time < 0){
+                            clearInterval(interval);
+                            question4();
+                        }
+                    }, 1000);
+                }
+                function question4(){
+                    const question = document.getElementById("question");
+                    const timer = document.getElementById("timer");
+                    question.innerHTML = "Your mood can change very quickly.";
+                    timer.innerHTML = "5";
+                    let time = 5;
+                    const interval = setInterval(function(){
+                        time--;
+                        timer.innerHTML = time;
+                        if (time < 0){
+                            clearInterval(interval);
+                            question5();
+                        }
+                    }, 1000);
+                }
+                function question5(){
+                    const question = document.getElementById("question");
+                    const timer = document.getElementById("timer");
+                    question.innerHTML = "You avoid making phone calls.";
+                    timer.innerHTML = "5";
+                    let time = 5;
+                    const interval = setInterval(function(){
+                        time--;
+                        timer.innerHTML = time;
+                        if (time < 0){
+                            clearInterval(interval);
+                            question6();
+                        }
+                    }, 1000);
+                }
+                function question6(){
+                    const question = document.getElementById("question");
+                    const timer = document.getElementById("timer");
+                    question.innerHTML = "You rarely feel insecure.";
+                    timer.innerHTML = "5";
+                    let time = 5;
+                    const interval = setInterval(function(){
+                        time--;
+                        timer.innerHTML = time;
+                        if (time < 0){
+                            clearInterval(interval);
+                            question7();
+                        }
+                    }, 1000);
+                }
+                function question7(){
+                    const question = document.getElementById("question");
+                    const timer = document.getElementById("timer");
+                    question.innerHTML = "You avoid leadership roles in group settings.";
+                    timer.innerHTML = "5";
+                    let time = 5;
+                    const interval = setInterval(function(){
+                        time--;
+                        timer.innerHTML = time;
+                        if (time < 0){
+                            clearInterval(interval);
+                            question8();
+                        }
+                    }, 1000);
+                }
+                function question8(){
+                    const question = document.getElementById("question");
+                    const timer = document.getElementById("timer");
+                    question.innerHTML = "You struggle with deadlines.";
+                    timer.innerHTML = "5";
+                    let time = 5;
+                    const interval = setInterval(function(){
+                        time--;
+                        timer.innerHTML = time;
+                        if (time < 0){
+                            clearInterval(interval);
+                            question9();
+                        }
+                    }, 1000);
+                }
+                function question9(){
+                    const question = document.getElementById("question");
+                    const timer = document.getElementById("timer");
+                    question.innerHTML = "You often feel overwhelmed.";
+                    timer.innerHTML = "5";
+                    let time = 5;
+                    const interval = setInterval(function(){
+                        time--;
+                        timer.innerHTML = time;
+                        if (time < 0){
+                            clearInterval(interval);
+                            question10();
+                        }
+                    }, 1000);
+                }
+                function question10(){
+                    const question = document.getElementById("question");
+                    const timer = document.getElementById("timer");
+                    question.innerHTML = "You enjoy participating in group activities.";
+                    timer.innerHTML = "5";
+                    let time = 5;
+                    const interval = setInterval(function(){
+                        time--;
+                        timer.innerHTML = time;
+                        if (time < 0){
+                            clearInterval(interval);
+                            endquiz();
+                        }
+                    }, 1000);
+                }
+                function endquiz(){
+                    const question = document.getElementById("question");
+                    const timer = document.getElementById("timer");
+                    question.innerHTML = "That's the end of the quiz! Generating your results...";
+                    timer.innerHTML = "";
+                    let time = 10;
+                    const interval = setInterval(function(){
+                        time--;
+                        timer.innerHTML = '';
+                        if(time<5){
+                            question.innerHTML = "One more moment...";
+                        }
+                        if (time < 0){
+                            clearInterval(interval);
+                            results();
+                        }
+                    }, 1000);
+                    
+                }
+                function results(){
+                    const question = document.getElementById("question");
+                    question.innerHTML = "Okay, I lied. This was not a personality quiz, but rather, a plot to measure your natural sitting posture. Let's see how you did:";
+                    timer.innerHTML = "";
+                    let time = 7;
+                    const interval = setInterval(function(){
+                        time--;
+                        timer.innerHTML = '';
+                        return;
+                    }, 1000);
+                    
+                    
+                    for (let i = 0; i < poselabels.length; i++){
+                        if (i % 2 == 0){
+                            good += poselabels[i];
+                            good = Math.round(good * 100) / 100;
+                        }
+                        else{
+                            bad += poselabels[i];
+                            bad = Math.round(bad * 100) / 100;
+                        }
+                    }
+                    if (good > bad){
+                        console.log('good:', good)
+                        console.log('bad:', bad)
+                        nextdiv.innerHTML = "You passed the posture check. Over the duration of 70 seconds, your posture was good for " + (good/(good+bad) * 100) + "% of it. Keep it up!"; //x * 25
+                    }
+                    else if (bad > good){
+                        console.log('good:', good)
+                        console.log('bad:', bad)
+                        nextdiv.innerHTML = "You did not pass the posture check. Over the duration of 70 seconds, your posture was bad for " + (bad/(good+bad) * 100) + "% of it. Straighten that back!";
+                    }
+                    
+                }
+
+                //a fun addition would be to gauge how someone fared compared to the average user. would mean implementing data collection from other people. but i don't think that'd be too hard.
+            
+
+            </script>
+
+
+        </div>
+    </div>
+
+
+
+<body>
+    
+</body>
+</html>
