@@ -90,7 +90,6 @@
                         const classPrediction = prediction[i].probability.toFixed(2); //THIS IS WHERE THE GOOD/BAD LABELS ARE
                         if(poselabels.length < 1750){
                             poselabels.push(parseFloat(classPrediction));
-                            console.log(poselabels)
                         }
                    
                     
@@ -330,14 +329,10 @@
                             bad = Math.round(bad * 100) / 100;
                         }
                     }
-                    if (good > bad){
-                        console.log('good:', good)
-                        console.log('bad:', bad)
+                    if (good > bad){            
                         nextdiv.innerHTML = "You passed the posture check. Over the duration of 70 seconds, your posture was good for " + (good/(good+bad) * 100) + "% of it. Keep it up!"; //x * 25
                     }
                     else if (bad > good){
-                        console.log('good:', good)
-                        console.log('bad:', bad)
                         nextdiv.innerHTML = "You did not pass the posture check. Over the duration of 70 seconds, your posture was bad for " + (bad/(good+bad) * 100) + "% of it. Straighten that back!";
                     }
                     
